@@ -5,6 +5,16 @@
 
 ## 技术原理
 
+### [SVG 图像入门教程](https://www.ruanyifeng.com/blog/2018/08/svg.html) 
+
+![image](https://user-images.githubusercontent.com/101693157/158824737-6329411e-3c30-4edc-99fe-7e06f084e6c0.png)
+
+SVG 是一种基于 XML 语法的图像格式，全称是可缩放矢量图（Scalable Vector Graphics）。`其他图像格式都是基于像素处理的，SVG 则是属于对图像的形状描述，所以它本质上是文本文件，体积较小，且不管放大多少倍都不会失真。`
+
+SVG 文件可以直接插入网页，成为 DOM 的一部分，然后用 JavaScript 和 CSS 进行操作。
+
+SVG 代码也可以写在一个独立文件中，然后用<img>、<object>、<embed>、<iframe>等标签插入网页。
+
 ### [相似图片搜索的原理](https://www.ruanyifeng.com/blog/2011/07/principle_of_similar_image_search.html) 
 
 2011年6月，Google把"相似图片搜索"正式放上了首页。
@@ -85,27 +95,53 @@
 有了50x50像素的黑白缩略图，就等于有了一个50x50的0-1矩阵。矩阵的每个值对应原图的一个像素，0表示黑色，1表示白色。这个矩阵就是一张图片的特征矩阵。
 
 两个特征矩阵的不同之处越少，就代表两张图片越相似。这可以用"异或运算"实现（即两个值之中只有一个为1，则运算结果为1，否则运算结果为0）。对不同图片的特征矩阵进行"异或运算"，结果中的1越少，就是越相似的图片。
+  
+### [如何识别图像边缘？](https://www.ruanyifeng.com/blog/2016/07/edge-recognition.html)
 
-<svg width="350" height="160">
-  <g class="layer" transform="translate(60,10)">
-    <circle r="5" cx="0"   cy="105" />
-    <circle r="5" cx="90"  cy="90"  />
-    <circle r="5" cx="180" cy="60"  />
-    <circle r="5" cx="270" cy="0"   />
+图像识别（image recognition）是现在的热门技术。
+文字识别、车牌识别、人脸识别都是它的应用。但是，这些都算初级应用，现在的技术已经发展到了这样一种地步：计算机可以识别出，这是一张狗的照片，那是一张猫的照片。
 
-    <g class="y axis">
-      <line x1="0" y1="0" x2="0" y2="120" />
-      <text x="-40" y="105" dy="5">$10</text>
-      <text x="-40" y="0"   dy="5">$80</text>
-    </g>
-    <g class="x axis" transform="translate(0, 120)">
-      <line x1="0" y1="0" x2="270" y2="0" />
-      <text x="-30"   y="20">January 2014</text>
-      <text x="240" y="20">April</text>
-    </g>
-  </g>
-</svg>
+这是怎么做到的？
+
+让我们从人眼说起，学者发现，人的视觉细胞对物体的边缘特别敏感。也就是说，我们先看到物体的轮廓，然后才判断这到底是什么东西。
+  
+计算机科学家受到启发，第一步也是先识别图像的边缘。
+
+![](https://www.ruanyifeng.com/blogimg/asset/2016/bg2016072208.png)
+  
+加州大学的学生 Adit Deshpande 写了一篇文章[《A Beginner's Guide To Understanding Convolutional Neural Networks》](https://adeshpande3.github.io/adeshpande3.github.io/A-Beginner%27s-Guide-To-Understanding-Convolutional-Neural-Networks/)，介绍了一种最简单的算法，非常具有启发性，体现了图像识别的基本思路。
+
+![](https://www.ruanyifeng.com/blogimg/asset/2016/bg2016072203.png)
+  
+首先，我们要明白，`人看到的是图像，计算机看到的是一个数字矩阵。所谓"图像识别"，就是从一大堆数字中找出规律。`
+  
+怎样将图像转为数字呢？一般来说，为了过滤掉干扰信息，可以把图像缩小（比如缩小到 49 x 49 像素），并且把每个像素点的色彩信息转为灰度值，这样就得到了一个 49 x 49 的矩阵。
+然后，从左上角开始，依次取出一个小区块，进行计算。
+
+![image](https://user-images.githubusercontent.com/101693157/158825889-204a8385-6e0e-49f3-89b7-dbe0e1ef269d.png)
+
+上图是取出一个 5 x 5 的区块。下面的计算以 7 x 7 的区块为例。
+接着，需要有一些现成的边缘模式，比如垂直、直角、圆、锐角等等。
+
+![](https://www.ruanyifeng.com/blogimg/asset/2016/bg2016072205.png)
+
+上图右边是一个圆角模式，左边是它对应的 7 x 7 灰度矩阵。可以看到，圆角所在的边缘灰度值比较高，其他地方都是0。
+现在，就可以进行边缘识别了。下面是一张卡通老鼠的图片。
+  
+![](https://www.ruanyifeng.com/blogimg/asset/2016/bg2016072206.png)
+取出左上角的区块。
+
+![](https://www.ruanyifeng.com/blogimg/asset/2016/bg2016072209.png)
+取样矩阵与模式矩阵对应位置的值相乘，进行累加，得到6600。这个值相当大，它说明什么呢？
+
+![](https://www.ruanyifeng.com/blogimg/asset/2016/bg2016072207.png)
+取样矩阵移到老鼠头部，与模式矩阵相乘，得到的值是0。
+
+乘积越大就说明越匹配，可以断定区块里的图像形状是圆角。通常会预置几十种模式，每个区块计算出最匹配的模式，然后再对整张图进行判断。
 
 ## 参考
+
+1. [正态分布为什么常见？](https://www.ruanyifeng.com/blog/2017/08/normal-distribution.html)
+2. [高斯模糊的算法](https://www.ruanyifeng.com/blog/2012/11/gaussian_blur.html)
 
 ![Alt](https://repobeats.axiom.co/api/embed/86211ab883763ed6c75fd14571647e7febb6919f.svg "Repobeats analytics image")
